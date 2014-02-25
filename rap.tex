@@ -1,0 +1,206 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[frenchb]{babel}
+\usepackage[T1]{fontenc}
+
+\usepackage{authblk}
+\usepackage{frbib}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{textcomp}
+\usepackage[all]{hypcap}
+\usepackage[labelseparator=endash]{caption}
+\usepackage[listofformat=parens]{subfig}
+\usepackage{graphicx, color}
+\usepackage{listings}
+\usepackage{float}
+\bibliographystyle{frplain}
+\hypersetup{colorlinks,%
+            citecolor=black,%
+            filecolor=black,%
+            linkcolor=black,%
+            urlcolor=blue}
+
+\newcommand{\LSTRESET}{
+  \lstset{
+    language=,
+    basicstyle=\color{black},
+    identifierstyle=\color{black}
+}
+}
+
+\setlength{\affilsep}{0.2cm}
+\author{François Deslandes}
+\affil{Génie Mathématique 5ème année}
+\affil{A l'attention de M. Caputo}
+%\date{4 Décembre 2013\\}
+\title{\Huge{Analyse non linéaire et problèmes inverses}\\
+\LARGE{Problèmes inverses liés à la cristallisation de polymères.}\\
+\vspace{10mm}
+}
+
+\DeclareMathOperator{\Rec}{Rec}
+\DeclareMathOperator{\card}{card}
+
+\begin{document}
+\maketitle\thispagestyle{empty}
+ 
+\newpage\null\thispagestyle{empty}\setcounter{page}{0}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Modèle de base et problème d'identification}
+
+Le problème modélisant la cristallisation de polymères est le suivant :
+\[
+\left\{
+\begin{array}{r c l}
+\frac{\partial T}{\partial t} &=& 
+			D \frac{\partial ^2T}{dx ^2} 
+			+ L \frac{\partial \xi}{\partial t} \\
+					
+\frac{\partial }{\partial t} (\frac{1}{\widetilde{G}(T) (1-\xi)}) &=& 
+			\frac{\partial}{dx} (\frac{1}{\widetilde{G}(T) (1-\xi)})
+			+ 2 \frac{\partial }{\partial t}(\widetilde{N}(T))
+\end{array}
+\right.
+\]
+
+Avec les conditions initiales suivantes :
+\[
+\left\{
+\begin{array}{r c l}
+T(x,0)		&=& 		T^ 0(x)		\\
+\xi(x,0)		&=&		0			\\
+\frac{\partial\xi}{\partial t}(x,0) 		&=&		0		\\
+\end{array}
+\right.
+\]
+
+et les conditions aux bords :
+\[
+\left\{
+\begin{array}{r c l r}
+\frac{\partial T}{\partial n}(x, t)		&=&		\alpha (T(x,t) -T^1(x,t)) & x \in \partial \Omega\\
+
+\frac{\partial T}{\partial t}(x, t)	+ \widetilde{G}(T) \frac{\partial T}{\partial n}(x, t)	&=&		0	 & x \in \partial \Omega\\
+
+
+\end{array}
+\right.
+\]
+
+On cherche à identifier $\widetilde{N}(T)$,le taux de nucléation, connaissant $\widetilde{G}(T)$, le taux de croissance radial, $\xi(x, t_*)$, le degré de cristallisation, et $T$ la température sur les bords du domaine.
+
+\section{Modèle simplifié  et problème d'identification}
+
+Par symétrie et avec des changements de variables, le problème devient :
+\[
+\left\{
+\begin{array}{r c l}
+u_t		&=&		D u_{xx} + L e^{-v} v_t		\\
+v_t		&=&		a(u)w						\\
+w_t		&=&		(a(u)v_x)_x + b(u)_t			\\
+\end{array}
+\right.
+\]
+
+Avec les conditions initiales suivantes :
+\[
+\left\{
+\begin{array}{r c l}
+u|_{t=0}		&=&		u^0		\\
+v|_{t=0}		&=&		0		\\
+w|_{t=0}		&=&		0		\\
+\end{array}
+\right.
+\]
+
+et les conditions aux bords :
+\[
+\left\{
+\begin{array}{r c l c}
+u_x(0, t)	&=&		-\alpha (u(0,t) - u^1(0, t)) 	\\
+w(0, t)		- v_x(0, t)	&=&		0				 	\\
+u_x(1,t)		&=&		0								\\
+v_x(1,t)		&=&		0								\\
+\end{array}
+\right.
+\]
+
+
+Dans ce problème, on cherche $b(u)$, l'équivalent de $\widetilde{N}(T)$. Il peut \^etre exprimé, avec l'opérateur non linéaire $F$, sous la forme suivante :
+\[
+\begin{array}{r l c}
+F(b)		&=&		(u^{\delta}_{B}, v^{\delta}_{*}) \\
+\end{array}
+\]
+
+Où $u^{\delta}_{B}$ et $v^{\delta}_{*}$ sont des mesures bruitées.
+
+
+\section{Méthode de résolution}
+
+Pour trouver $b(u)$, on utilise l'itération de Landweber.
+\[
+\begin{array}{r l c}
+b^{k+1} 	&=&	b^{k} +  \omega F'(b^k)*(F(b^k) - (u^{\delta}_{B}, v^{\delta}_{*}) \\
+\end{array}
+\]
+
+Où $F'$ représente la dérivée de l'opérateur $F$ et $F*$ son adjoint.\\
+
+Par la suite, un algorithme itératif basé en partie sur le calcul de l'adjoint de $F$ sera donnée pour trouver $b$ à partir d'un choix arbiraire de $b^0$.
+
+\section{Ma question}
+On veut calculer $F'(b)$.\\
+
+Dans un premier temps, l'opérateur $F$ est séparé en : $F=\Psi \circ  \Phi$. L'opérateur $\Psi$ se charge de conditions limites et est linéaire, ce qui permet de dire que : $F'=\Psi \circ  \Phi '$. On suppose que $\Phi '$ existe.
+A partir de ce moment, je ne comprend plus. Il est dit que par linéarisation directe on peut conclure que la dérivée $(U,V,W):=\Phi '(b)h$. satisfait le système suivant : \footnote{Ce sont les équations (2.4-7)}
+
+\[
+\left\{
+\begin{array}{r c l}
+U_t		&=&		D U_{xx} + L e^{-v} (v_t V +V_t)		\\
+V_t		&=&		a(u)W + a'(u)Uw						\\
+W_t		&=&		(a(u)V_x)_x + (a'(u)Uv_x)_x + (b'(u)U)_t + h(u)_t v\\
+\end{array}
+\right.
+\]
+
+Avec les conditions initiales suivantes :
+\[
+\left\{
+\begin{array}{r c l}
+u|_{t=0}		&=&		0		\\
+v|_{t=0}		&=&		0		\\
+w|_{t=0}		&=&		0		\\
+\end{array}
+\right.
+\]
+
+et les conditions aux bords :
+\[
+\left\{
+\begin{array}{r c l c r}
+\alpha U + U_x	&=&		0 	&	x = 0\\
+W		- V_x 	&=&		0	&	x = 0\\
+U_x	&=&		0 	&	x = 1\\
+V_x 	&=&		0	&	x = 1\\
+\end{array}
+\right.
+\]
+
+\textbf{Je ne comprend pas comment il obtient les systèmes d'équations (il utilise clairement les équations de départ en dérivant mais en dérivant quoi et comment?). Je ne comprend pas non plus à quoi correspond le h(u).}\\
+
+Il calcule ensuite l'adjoint $F'*$ en séparant l'opérateur $F'$. \textbf{Il obtient à nouveau un système d'équations issu du modèle simplifié. Je suppose que c'est la même technique qui est employée? } \footnote{Ce sont les équations (2.11-14)}
+
+
+\clearpage
+\end{document}
