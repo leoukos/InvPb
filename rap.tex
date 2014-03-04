@@ -158,11 +158,10 @@ Où $F'$ représente la dérivée de l'opérateur $F$ et $F*$ son adjoint.\\
 
 Par la suite, un algorithme itératif basé en partie sur le calcul de l'adjoint de $F$ sera donnée pour trouver $b$ à partir d'un choix arbiraire de $b^0$.
 
-\section{Ma question}
-On veut calculer $F'(b)$.\\
+\subsection{Linéarisé}
 
 Dans un premier temps, l'opérateur $F$ est séparé en : $F=\Psi \circ  \Phi$. L'opérateur $\Psi$ se charge de conditions limites et est linéaire, ce qui permet de dire que : $F'=\Psi \circ  \Phi '$. On suppose que $\Phi '$ existe.
-A partir de ce moment, je ne comprend plus. Il est dit que par linéarisation directe on peut conclure que la dérivée $(U,V,W):=\Phi '(b)h$. satisfait le système suivant : \footnote{Ce sont les équations (2.4-7)}
+On va obtenir $F'(b)h=\Psi \circ  \Phi'(b) h$ en linéarisant le système. Pour cela, on suppose que $(u,v,w)$ est solution. On suppose ensuite que $(u+U, v+V, w+W)$ est proche de la solution. Avec $a(u+U)=a(u)+a'(u)U$ et $b(u+U)=b(u)+b'(u)U+h(u)$, $(U,V,W)=\Phi'(b) h$ satisfait le système suivant :
 
 \[
 \left\{
@@ -197,9 +196,59 @@ V_x 	&=&		0	&	x = 1\\
 \right.
 \]
 
-\textbf{Je ne comprend pas comment il obtient les systèmes d'équations (il utilise clairement les équations de départ en dérivant mais en dérivant quoi et comment?). Je ne comprend pas non plus à quoi correspond le h(u).}\\
+\subsection{Adjoint}
+Il nous faut maintenant obtenir l'adjoint.
 
-Il calcule ensuite l'adjoint $F'*$ en séparant l'opérateur $F'$. \textbf{Il obtient à nouveau un système d'équations issu du modèle simplifié. Je suppose que c'est la même technique qui est employée? } \footnote{Ce sont les équations (2.11-14)}
+\subsection{Algorithme}
+
+A partir de ces étapes, on peut donner l'algorithme de résolution suivant :
+
+\section{Analyse de la convergence}
+Nous allons admettre la convergence du problème non bruité et montrer la	 convergence du problème bruité.
+
+On appelle $x^{n, \delta}$ l'itération $n$ du problème bruité et on s'intéresse à $\|x^{n,\delta} - \hat{x} \|$. On peut écrire l'inégalité triangulaire :
+
+\[
+\|x^{n,\delta} - \hat{x} \| \leq \|x^{n,\delta} - x^n \| + \|x^n - \hat{x} \|
+\]
+
+On sait $\|x^n - \hat{x} \|$ tend vers zero puisqu'on a supposé la convergence pour le problème non bruité. Il nous reste à majorer le second terme.
+
+On peut montrer que :
+\[
+\|x^{n,\delta} - \hat{x} \| \leq n\omega \delta + \|x^n - \hat{x} \|
+\]
+
+Et en supposant que $\hat{x} \in ImA^*$, on peut avoir :
+\[
+\|x^{n,\delta} - \hat{x} \| \leq n\omega \delta + \frac{C}{n \omega}
+\]
+
+Ce qui montre qu'il existe un nombre d'itération optimal qui dépend de la valuer de $\delta$. On a $n(\delta)=O(\sqrt{\delta})$.
+
+
+\section{Résultats numériques}
+
+Les résultats numériques sont particulièrement intéressant puisqu'ils ont des implications physiques intrinsèques. Nous allons étudier plusieurs configurations pour le problème à savoir :
+\begin{itemize}
+\item \textbf{La gamme de température} : nous étudierons le cas où la temperature est prise dans tout l'intervalle $[0;1]$, puis nous verrons le cas "réaliste" où la température est prise dans $[0.2;1]$.
+\item \textbf{Le nombre d'itérations :} nous avons vu lors de l'étude de la convergence que pour des données bruitées, il existe un nombre d'itérations otpimal.
+\item \textbf{L'erreur :} nous verrons que l'erreur est fonction du bruit.
+\end{itemize}
+
+Les données exactes sont obtenues en résolvant le problème directe avec un discrétisation très fine. Elles sont ensuite perturbées pour obtenir les données bruitées. Pour simplifier, on prend des valeurs constantes pour $a$.
+
+\subsection{Gamme de température}
+
+Les résultats obtenus sont meilleurs pour la gamme de température réaliste. Sur les graphique, on remarque que la solution calculée est moins bonne uniquement là en dehors de $[0.2;1]$.
+
+\subsection{Convergence et erreur}
+
+Dans la condition d'arr\^et de l'aglorithme, on a un paramètre $\tau$. On le fixe à une valeur faible $\tau = 2.1$.
+
+On constate que le nombre d'itérations optimal dépend fortement de la valeur de $a$. Ceci montre que le problème est mal posé puisque seules les premières itérations sont proches de la solution.
+
+Le choix de la valeur de $\omega$ est important et permet d'accélérer la convergence mais il faut cependant faire attention a ne pas prendre $\omega$ trop élevé si les résidus sont proches de $\tau \delta$.
 
 
 \clearpage
