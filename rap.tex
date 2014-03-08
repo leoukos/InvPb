@@ -17,6 +17,16 @@
 \usepackage[listofformat=parens]{subfig}
 \usepackage{graphicx, color}
 \usepackage{listings}
+\lstset{language=C}
+\lstset{morecomment=[l]{//}}
+\lstset{basicstyle=\footnotesize}
+\lstset{keywordstyle=\bf \color {blue},
+commentstyle=\color{OliveGreen},
+stringstyle=\color {red}}
+\lstset{frame=single, rulesepcolor=\color{black}}
+\usepackage{float}
+\usepackage{algorithm}
+\usepackage{algorithmic}
 \usepackage{float}
 \bibliographystyle{frplain}
 \hypersetup{colorlinks,%
@@ -43,6 +53,9 @@
 \vspace{10mm}
 }
 
+% EASY PARTIAL DERIVATIVE
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+
 \DeclareMathOperator{\Rec}{Rec}
 \DeclareMathOperator{\card}{card}
 
@@ -54,6 +67,15 @@
 \newpage
 \tableofcontents
 \newpage
+
+\section{Introdution}
+Nous nous intéressons dans cette étude à la cristallisation de polymères dans différentes conditions de formation. Ce problème présente un intér\^et particulier pour les spécialistes du domaine, d'une part parce que l'accès à des mesures directes est difficile, d'autre part parce que la qualité des résultats dépend de l'utilisation de paramètres physiques précis. Les mesures physiques directes disponibles sont bruitées, ce qui ajoute une difficulté supplémentaire qui impacte la qualité des résultats.
+
+
+Nous utiliserons dans cette étude un modèle physique, en dimension 1, faisant intervenir deux équations aux dérivées partielles couplée, l'une elliptique et l'autre hyperbolique, modélisant l'évolution de la température et du degré de cristallisation. Ces deux équations dépendent de deux paramètres physiques dépendant fortement de la température,les taux d'accroissement et de nucléation, dont l'identification présente un intérêt particulier puisqu'ils ne peuvent pas être mesurés.
+
+
+On souhaite produire un algorithme stable permettant d'identifier, en résolvant le problème inverse, le taux de nucléation.
 
 \section{Modèle de base et problème d'identification}
 
@@ -96,11 +118,45 @@ et les conditions aux bords :
 \right.
 \]
 
-On cherche à identifier $\widetilde{N}(T)$,le taux de nucléation, connaissant $\widetilde{G}(T)$, le taux de croissance radial, $\xi(x, t_*)$, le degré de cristallisation, et $T$ la température sur les bords du domaine.
+On cherche à identifier $\widetilde{N}(T)$,le taux de nucléation, connaissant $\widetilde{G}(T)$, le taux de croissance radial, $\xi(x, t_*)$, le degré de cristallisation, et $T$ la température sur les bords du domaine. Les constantes $L$ et $D$ sont des paramètres physiques correspondants respectivement à l'enthalpie de changement d'état et au coefficient de diffusion. $\alpha$ est le coeffient de convection thermique.
 
 \section{Modèle simplifié  et problème d'identification}
 
-Par symétrie et avec des changements de variables, le problème devient :
+Avant de pouvoir utiliser ce modèle, nous devons faire des simplifications, notamment pour avoir un modèle avec deux équations d'ordre 1 en temps. On va donc poser les changements de variables suivants :
+
+%\pd{\xi}{t} & = & \widetilde{G}(T)(1-\xi)\omega  	\\
+\[
+\begin{array}{r c l}
+w & = & \frac{1}{\widetilde{G}(T)(1-\xi)}\pd{\xi}{t} \\
+\omega_t= & = &
+	 \pd{}{x}(\frac{\widetilde{G}(T)}{1-\xi}\pd{\xi}{x}) + 2 \pd{\widetilde{N}(T)}{t}
+\end{array}
+\]
+
+
+\[
+\begin{array}{r c l}
+u & = &  T \\
+\end{array}
+\]
+
+\[
+\begin{array}{r c l}
+v & = & -ln(1-\xi) \\
+v_t & = & \xi_t \frac{1}{1-\xi} \\
+v_x & = & \xi_x \frac{1}{1-\xi} \\
+\end{array}
+\]
+
+Par symétrie, on peut utiliser les conditions à droite suivante et on appliquera une transformation pour que $[a, \frac{a+b}{2}]$ soit envoyé sur $[0,1]$ :
+\[
+\begin{array}{r c l}
+\pd{T}{x}(\frac{a+b}{2}, .) & = & 0 \\
+\pd{\xi}{x}(\frac{a+b}{2}, .) & = & 0 \\
+\end{array}
+\]
+
+Le problème initial devient :
 \[
 \left\{
 \begin{array}{r c l}
@@ -135,7 +191,9 @@ v_x(1,t)		&=&		0								\\
 \]
 
 
-Dans ce problème, on cherche $b(u)$, l'équivalent de $\widetilde{N}(T)$. Il peut \^etre exprimé, avec l'opérateur non linéaire $F$, sous la forme suivante :
+Dans ce problème, on cherche $b(u)$, l'équivalent de $\widetilde{N}(T)$ et $a(u)$ est l'équivalent de  $\widetilde{G}(T)$.
+
+Le problème peut \^etre exprimé, avec l'opérateur non linéaire $F$, sous la forme suivante :
 \[
 \begin{array}{r l c}
 F(b)		&=&		(u^{\delta}_{B}, v^{\delta}_{*}) \\
@@ -146,6 +204,21 @@ Où $u^{\delta}_{B}$ et $v^{\delta}_{*}$ sont des mesures bruitées.
 
 
 \section{Méthode de résolution}
+Le problème direct admet une solution forte unique pour des valeurs du paramètres $b$. Trouver les conditions sur $b$ pour assurer que le problème est bien posé est très technique et par conséquent, on suppose que le problème direct est bien posé. On peut définir l'opérateur $F$ formellement de la façon suivante :
+\[
+\begin{array}{c}
+F:D(F) \subset V:={b|b\in0 H^1([u_1,u_2], b(u_2)=0)} \rightarrow L^2(I) \times L^2(\Omega) \\
+b \rightarrow (u|_{x=0}, v|_{t=t_*})
+\end{array}
+\]
+Où le domaine d'espace temps est défini par :
+\[
+\begin{array}{c}
+Q := \Omega x I = (0,1) \times (0, t_*)
+\end{array}
+\]
+
+Le problème inverse en revanche, et très certainement mal posé. Il est donc naturel d'envisager une méthode de régularisation. La méthode de régularisation de Tikhonov, très utilisée pour résoudre des problèmes inverses, cependant, elle n'est pas envisageable dans le cadre fixé puisque la fonctionnelle n'est pas nécessairement convexe. La fonctionnelle peut présenté de nombreux minima locaux ce qui rend la minimisation beaucoup plus complexe. Nous allons par conséquent avoir recours à une méthode itérative.
 
 Pour trouver $b(u)$, on utilise l'itération de Landweber.
 \[
@@ -197,11 +270,72 @@ V_x 	&=&		0	&	x = 1\\
 \]
 
 \subsection{Adjoint}
-Il nous faut maintenant obtenir l'adjoint.
+Il nous faut maintenant obtenir l'adjoint. Pour cela, on va séparer $F'(b)h$.
+\[
+\begin{array}{l c r}
+F'(b)h &=& S \circ R \circ J h \\
+\end{array}
+\]
+
+L'opérateur $J$ s'occupe d'envoyer $V$ sur $L^2([u_2, u_1])$. L'opérateur $R$ 
+envoie $h(u) \in L^2([u_1, u_2])$ sur $h(u(x,t)) \in L^2(\Omega \times I)$.  L'opérateur $S$ s'occupe des conditions de bords et initiales.
+
+Pour obtenir l'adjoint, on peut écrire :
+\[
+\begin{array}{l c r}
+F'(b)^* &=& J^* \circ R^* \circ S^* \\
+\end{array}
+\]
+
+En résolvant un système d'équations en $(\phi, \psi, \theta)$ issus du linéarisé, on peut obtenir le résidus :
+\[
+\begin{array}{l c r}
+(q, r) &=& F(b) - (u_b^ \delta, v_*^ \delta) \\
+\end{array}
+\]
+
+On déduit ensuite :
+\[
+\begin{array}{l c r}
+S*(q, r) &=& a(u)\psi \\
+\end{array}
+\]
+
+La méthode de calcul des adjoints de $R^*$ et $J^*$ est difficilement utilisable en pratique. On va donc utiliser une méthode de projection pour approximer $J^*R^*\phi$. Pour cela, on va utiliser la projection orthogonale $\widetilde{\phi_N})$ de $\widetilde{\phi}:=J^*R^*\phi$ dans un sous-espace $V_N$ de $H^1([u_1, u_2])$. Ainsi, on peut écrire $\widetilde{\phi_N})$ sous la forme :
+\[
+\begin{array}{l c r}
+\widetilde{\phi_N} = \sum_{i=1}^{N} 
+  \alpha_i p_i \\
+\end{array}
+\]
+
+On est alors amené à résoudre un système linéaire que l'on peut rendre tri-diagnoal en prenant les $p_i$ comme des splines linéaires.
+
 
 \subsection{Algorithme}
 
 A partir de ces étapes, on peut donner l'algorithme de résolution suivant :
+\begin{algorithm}
+\caption{Indentification de $b$ par la méthode de Landweber}
+\begin{algorithmic}
+\STATE \text{Choisir une solution initiale $b^0$}
+\WHILE{\text{$\| F(b^k) - (u^{\delta}_B, v^{\delta}_*)  \| > \tau \delta $}} 
+	\STATE \text{Calculer $F(b^ k)$ en résolvant le problème initial.}
+	\STATE \text{Evaluer $(u_b, v_*)$}.
+	\STATE \text{Calculer le résidu $(q^{\delta}, r^{\delta})$}.
+	\STATE \text{Calculer l'adjoint $S^*(q,r)=a(u)\psi$}.
+	\STATE \text{Calculer $F^{'}(b^k)^*(q,r)=J^*R^*a(u)\psi$ par la méthode de projection}.
+	\STATE \text{Calculer la nouvelle itération 
+$\begin{array}{r l c}
+b^{k+1} 	&=&	b^{k} +  \omega F'(b^k)*(F(b^k) - (u^{\delta}_{B}, v^{\delta}_{*}) \\
+\end{array}$}
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+\newpage
+
+La condition d'arr\^et est basée sur une borne dans $L^2$ du bruit sur les observations. La valeur de $\tau$ doit \^etre fixée supérieure à 2 d'après la théorie sur la convergence. Il est cependant difficile de connaître calculer la valeur selon cette théorie.
+
 
 \section{Analyse de la convergence}
 Nous allons admettre la convergence du problème non bruité et montrer la	 convergence du problème bruité.
